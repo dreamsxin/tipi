@@ -18,7 +18,7 @@
 #book_header h1 a {
 	display: inline-block;
 	height: 45px;
-	width: 266px;
+	width: 272px;
 	text-decoration: none;
 	font-size: 1.3em;
 	background: url(../images/common-logo.png) left center no-repeat;
@@ -215,6 +215,11 @@
 
 	/* Hack for IE pre expand to much */
 	_word-wrap: break-word;
+}
+
+#book_content code {
+	color: #007EBA;
+	margin: 2px;
 }
 
 .dialog_box {
@@ -499,4 +504,12 @@
 }
 .book-img img {
 	max-width: 720px;
+}
+
+#page_last_update_time, #page_last_update_time a {
+	color: #bbb;
+	text-decoration: none;
+}
+#page_last_update_time a:hover {
+	text-decoration: underline;
 }
