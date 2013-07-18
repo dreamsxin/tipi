@@ -11,15 +11,17 @@ class BookPage extends MarkdownPage
     protected $title 		= NULL;
     protected $base_dir 	= NULL;
     protected $page_name 	= NULL;
-    protected static $_allArticleList = NULL;
+	protected $revision		= NULL;
+	protected $headers 		= array();
 
-	protected $headers 	= array();
+	protected static $version_mrg		= NULL;
+    protected static $_allArticleList	= NULL;
 
     /**
      * @param string $page_path 	书籍页面的路径, 例如chapt01/01-04-summary
      * @param string $book_base_dir 书籍目录地址, 默认值为TIPI项目路径的book目录
      */
-    public function __construct($page_name, $base_dir='../../book', $is_for_print=false) {
+    public function __construct($page_name, $revision=null, $base_dir='../../book', $is_for_print=false) {
         $this->page_name = $page_name;
         $this->base_dir = $base_dir;
 
@@ -29,11 +31,58 @@ class BookPage extends MarkdownPage
 
 		$parser = $is_for_print ? new TipiMarkdownExt(array('header' => array($this, 'reAssignHeaderLevel'))) : null;
 
-		parent::__construct(array('file' => $this->getPageFilePath()), $parser);
+		if($revision && self::$version_mrg) {
+			$page_raw_data = self::$version_mrg->getRawDataByFile("book/$page_name", $revision);
+			if(!$page_raw_data) {
+				throw new PageNotFoundException("你所请求的页面不存在该版本");
+			}
+
+			parent::__construct(array('text' => $page_raw_data), $parser);
+		}
+		else {
+			parent::__construct(array('file' => $this->getPageFilePath()), $parser);
+		}
 
 		// markdown文件的大纲标题信息
 		$this->headers = is_array($this->meta['headers']) ? $this->meta['headers'] : array();
     }
+
+	public static function setVersionManger($manager) {
+		self::$version_mrg = $manager;	
+	}
+
+	public function getRevisionHistories() {
+		if(!self::$version_mrg) return array();
+
+		return self::$version_mrg->getRevisionHistories("book/{$this->page_name}." . self::extension);
+	}
+
+	public function getHistoriesUrl() {
+		return "https://github.com/" .
+					GITHUB_API_USER . "/" . GITHUB_API_REPOS . "/commits/" .
+					GITHUB_API_BRANCH . "/book/{$this->page_name}." . self::extension;
+	}
+
+	public function getLastUpdatedAt($remote=false, $format=null) {
+		if($remote && self::$version_mrg) {
+			try {
+				$commit = self::$version_mrg->getLastCommit("book/{$this->page_name}." . self::extension);
+				$time = strtotime($commit['committed_date']);
+			}
+			catch(Exception $e) {
+				return false;
+			}
+		}
+		else {
+			$time = parent::getLastUpdatedAt();
+		}
+
+		if($format) {
+			return date($format, $time);
+		}
+
+		return $time;
+	}
 	
 	// Pdf版的内容需要重新对标题级别调整一下以便生成目录
 	public function reAssignHeaderLevel($level) {
@@ -124,7 +173,8 @@ class BookPage extends MarkdownPage
     }
 
     private static function _getPageNameByFileName($file_name) {
-        $found_file_name = array_pop(explode("/", $file_name));
+        $file_name_array = explode("/", $file_name);
+        $found_file_name = array_pop($file_name_array);
         list($found_page_name) = explode(".", $found_file_name);
 
         return $found_page_name;
@@ -369,7 +419,7 @@ class BookPage extends MarkdownPage
 	public static function getFlatPagesArray($is_for_print=false) {
 		$pages = array();
 		foreach(self::getFlatPages() as $page) {
-			$pages[] = new self($page['page_name'], '../../book', $is_for_print);
+			$pages[] = new self($page['page_name'], null, '../../book', $is_for_print);
 		}
 	
 		return $pages;
@@ -380,6 +430,8 @@ class BookPage extends MarkdownPage
 	}
 
 	/**
+	 * 找到目录中和page_name相近的章节
+	 *
 	 * TIPI的目录结构经常会发生变化, 导致地址经常会发生变化, 为此需要对老的地址做一些处理,
 	 * 否则一些用户收藏的地址就会无效, 所以采用两种方式来处理:
 	 *
@@ -392,17 +444,26 @@ class BookPage extends MarkdownPage
 	 *
 	 * return array  array('0.8' => 'chapt03/03-01-00-**')
 	 */
-	public static function getSuggestPagesFromName($page_name) {
-		$match_pages = array();
-		$pages = self::getFlatPagesArray();
+	public static function getSimilarPagesFromPageName($page_name, $min_percentage=80) {
+		$matched_pages = array();
+		$pages = self::getFlatPages();
+
 		foreach($pages as $page) {
-			// TODO	
+			$match_chars = similar_text($page_name, $page['page_name'], $percentage);
+			if($percentage < $min_percentage) continue;
+
+			$matched_pages[$percentage] = $page['page_name'];
 		}
-		return array();	
+
+		krsort($matched_pages, SORT_NUMERIC);
+
+		return $matched_pages;
 	}
 
-	private static function _strDistance($str1, $str2) {
-		// TODO	
+	public static function getMostSimilarPageFromPageName($page_name) {
+		$similar_pages = self::getSimilarPagesFromPageName($page_name);	
+
+		return array_shift($similar_pages);
 	}
 
     /**
@@ -454,7 +515,8 @@ class BookPage extends MarkdownPage
     private static function _initChapterListData($chapterDir) {
         $data = array();
         $max_level = 0;
-        $chapt_name = array_pop(explode("/", $chapterDir));
+		$chapt_name_array = explode("/", $chapterDir);
+        $chapt_name = array_pop($chapt_name_array);
         $root = '';
 
         $files = glob($chapterDir . "/*." . self::extension);
@@ -534,6 +596,10 @@ class BookPage extends MarkdownPage
 
 }
 
-class BookPageNotFoundException extends Exception {
+class BookPageNotFoundException extends PageNotFoundException {
+
+}
+
+class BookPageWithRevisionNotAvailableException extends BookPageNotFoundException {
 
 }

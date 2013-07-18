@@ -11,6 +11,7 @@
 	<link rel="alternate" type="application/rss+xml" title="<?php echo SITE_NAME;?>" href="<?php echo url_for("/feed/"); ?>" />
 	<link rel="shortcut icon" href="<?php echo url_for("/favicon.ico"); ?>" type="image/vnd.microsoft.icon">
 	<!--[if IE]><?php echo stylesheet_include_tag('ie.css'); ?><![endif]-->
+	<?php SimpieView::include_partial("../templates/layout/_google_analytics.php"); ?>
 </head>
 <body id='book'>
 	<?php SimpieView::include_partial("../templates/layout/_header.php"); ?>
@@ -26,6 +27,10 @@
 						<?php SimpieView::include_partial("../templates/layout/_book_tools.php", array('page' => $page, 'extra' => array('title' => ($title ? $title : '')))); ?>
 						<div id="book_body" class="inner-containner">
 							<?php echo $layout_content; ?>
+
+							<?php if($page_last_update_time): ?>
+							<div id="page_last_update_time">最后更新于：<span><a target="_blank" href="<?php echo $page->getHistoriesUrl(); ?>"><?php echo $page_last_update_time?></a></span></div>
+							<?php endif; ?>
 
 							<?php if($is_detail_view): ?>
 								<?php SimpieView::include_partial("../templates/layout/_book_navor.php", array('page' => $page)); ?>
