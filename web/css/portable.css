@@ -61,6 +61,8 @@ pre {
 	color: #222;
 }
 
+#portable .st0 {color: #33B103}
+
 p {
 	text-indent: 2em;
 }
@@ -145,4 +147,8 @@ p {
 
 .book-img {
 	text-align: center;
+}
+
+.book-img img {
+	max-width: 720px;
 }

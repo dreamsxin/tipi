@@ -108,6 +108,7 @@
     * 第一节 扩展开发概述
 
 - 第十二章 文件和流
+	* stream wrapper
 
 - 第十三章 网络编程
 
@@ -133,7 +134,7 @@
     * Generator
 
 - 第十八章 CPHP以外: PHP编译器
-    * HipHop
+    * HipHop VM
     * phc
     * Roadsend
     * Phalanger
@@ -240,9 +241,14 @@
 [php-foreach]:              ?p=chapt16/16-01-01-php-foreach
 
 
+[error-and-exception-handle]:	?p=chapt09/09-00-error-and-exception-handle
+
+[output-buffer]:	?p=chapt10/10-00-output-buffer
+
 [appendix-a]:        		?p=A-PHP-Zend-API
 [appendix-b]:        		?p=B-PHP-Versions-and-History
 [appendix-c]:        		?p=C-php-vld
 [appendix-d]:        		?p=D-how-to-contribute-to-php
 [appendix-e]:        		?p=E-phpt-file
 [appendix-f]:        		?p=F-upgrade-to-php-5-4-explain
+[appendix-g]:        		?p=G-re2c-mannual
